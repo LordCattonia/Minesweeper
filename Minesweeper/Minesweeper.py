@@ -1,5 +1,6 @@
 import random
 import pygame
+import pygame.font
 
 COLOR = (255, 100, 98)
 SURFACE_COLOR = (167, 255, 100)
@@ -15,15 +16,15 @@ def main():
 
     canvas = pygame.display.set_mode((800, 800))
     pygame.display.set_caption("Minesweeper")
-    
 
-    spriteList = []
+
     spriteList = pygame.sprite.Group()
-
-    def find_element(Intlist, searchObj):
-        y = 0
-        for i in range(len(Intlist)):
-            if Intlist[i] == searchObj: y = i
+    
+    def find_element(Intlist, searchObj,refList):
+        y=0
+        for i in Intlist:
+            if i == searchObj: break
+            y+=1
         for i in range(len(refList)):
             for j in range(len(refList[i])):
                 if refList[i][j] == y:
@@ -48,12 +49,13 @@ def main():
         inList = []
         for j in range(20):
             inList.append(x)
-            x++1
+            x+=1
         refList.append(inList.copy())
         inList.clear()
 
-    running = True
+    font = pygame.font.Font(None, 36)
 
+    running = True
     while running:
         
         for event in pygame.event.get():
@@ -64,8 +66,21 @@ def main():
                 # get a list of all sprites that are under the mouse cursor
                 clicked_sprites = [s for s in spriteList if s.rect.collidepoint(pygame.mouse.get_pos())]
                 for i in clicked_sprites:
-                    x, y = 0, 0
-                    [x, y] == find_element(spriteList, i)
+                    if i.clickable:
+                        x, y = 0, 0
+                        [x, y] = find_element(spriteList, i, refList)
+                        
+                        # Get centre
+                        square_center_x = i.rect.x + i.width // 2
+                        square_center_y = i.rect.y + i.height // 2
+
+                        # Render the text
+                        text_surface = font.render(str(map[x][y]), True, (0, 0, 0))
+                        text_rect = text_surface.get_rect()
+                        text_rect.center = (square_center_x, square_center_y)
+
+                        # Draw the "0" text on the square's surface
+                        i.image.blit(text_surface, text_rect.topleft)
             # Right Click
             if event.type == pygame.MOUSEBUTTONUP and event.button == 3:
                 # get a list of all sprites that are under the mouse cursor
@@ -73,6 +88,11 @@ def main():
                 for i in clicked_sprites:
                     if not i.immutable:
                         if i.clickable:
+                            i.clickable = False
+                            pygame.draw.rect(i.image,
+                                 (255, 20, 20),
+                                 pygame.Rect(0, 0, i.width, i.height))
+                        else:
                             i.clickable = True
                             if i.cb:
                                 pygame.draw.rect(i.image,
@@ -81,11 +101,6 @@ def main():
                             else:
                                 pygame.draw.rect(i.image,
                                  (25, 255, 10),
-                                 pygame.Rect(0, 0, i.width, i.height))
-                        else:
-                            i.clickable = False
-                            pygame.draw.rect(i.image,
-                                 (255, 20, 20),
                                  pygame.Rect(0, 0, i.width, i.height))
                    
         spriteList.draw(canvas)
