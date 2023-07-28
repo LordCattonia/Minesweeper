@@ -1,3 +1,4 @@
+from gettext import find
 import random
 import pygame
 import pygame.font
@@ -53,7 +54,7 @@ def main():
         refList.append(inList.copy())
         inList.clear()
 
-    font = pygame.font.Font(None, 36)
+    font = pygame.font.Font(None, 50)
 
     running = True
     while running:
@@ -66,21 +67,68 @@ def main():
                 # get a list of all sprites that are under the mouse cursor
                 clicked_sprites = [s for s in spriteList if s.rect.collidepoint(pygame.mouse.get_pos())]
                 for i in clicked_sprites:
-                    if i.clickable:
+                    if i.clickable and not i.immutable:
                         x, y = 0, 0
                         [x, y] = find_element(spriteList, i, refList)
-                        
+
+                        pygame.draw.rect(i.image,
+                                 canvasColour,
+                                 pygame.Rect(0, 0, i.width, i.height))
+
                         # Get centre
-                        square_center_x = i.rect.x + i.width // 2
-                        square_center_y = i.rect.y + i.height // 2
+                        square_center_x = i.width // 2
+                        square_center_y = i.height // 2
 
                         # Render the text
                         text_surface = font.render(str(map[x][y]), True, (0, 0, 0))
                         text_rect = text_surface.get_rect()
                         text_rect.center = (square_center_x, square_center_y)
 
-                        # Draw the "0" text on the square's surface
+                        # Draw the text on the square's surface
                         i.image.blit(text_surface, text_rect.topleft)
+
+                        if map[x][y] == "#":
+                            for a in range(len(map)):
+                                for b in range(len(map[a])):
+                                    if map[a][b] == "#":
+                                        k = spriteList.sprites()[refList[a][b]]
+                                        pygame.draw.rect(k.image,
+                                        canvasColour,
+                                        pygame.Rect(0, 0, k.width, k.height))
+
+                                        # Get centre
+                                        square_center_x = k.width // 2
+                                        square_center_y = k.height // 2
+
+                                        # Render the text
+                                        text_surface = font.render("#", True, (0, 0, 0))
+                                        text_rect = text_surface.get_rect()
+                                        text_rect.center = (square_center_x, square_center_y)
+
+                                        # Draw the text on the square's surface
+                                        k.image.blit(text_surface, text_rect.topleft)
+                        if map[x][y] == 0:
+                            adj = find_adjacent_places(refList, x, y)
+                            for j in adj:
+                                [a,b] = find_element(spriteList, j, refList)
+                                k = spriteList.sprites()[refList[a][b]]
+                                pygame.draw.rect(k.image,
+                                 canvasColour,
+                                 pygame.Rect(0, 0, k.width, k.height))
+
+                                # Get centre
+                                square_center_x = k.width // 2
+                                square_center_y = k.height // 2
+
+                                # Render the text
+                                text_surface = font.render(str(map[a][b]), True, (0, 0, 0))
+                                text_rect = text_surface.get_rect()
+                                text_rect.center = (square_center_x, square_center_y)
+
+                                # Draw the text on the square's surface
+                                k.image.blit(text_surface, text_rect.topleft)
+
+                        i.immutable = True
             # Right Click
             if event.type == pygame.MOUSEBUTTONUP and event.button == 3:
                 # get a list of all sprites that are under the mouse cursor
